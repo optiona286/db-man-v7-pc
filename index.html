@@ -1061,9 +1061,13 @@ body.desktop-mode #app{
   padding:10px;
   overflow:auto;
 }
-body.desktop-mode .page{
+body.desktop-mode #pgRank,
+body.desktop-mode #pgChart,
+body.desktop-mode #pgWatch,
+body.desktop-mode #pgStats,
+body.desktop-mode #pgSet{
   position:relative;
-  display:flex !important;
+  display:flex;
   inset:auto;
   overflow:auto;
   border:1px solid var(--brd);
@@ -1074,18 +1078,40 @@ body.desktop-mode #pgRank{
   resize:horizontal;
   min-width:360px;
 }
+body.desktop-mode #pgChart,
+body.desktop-mode #pgWatch,
+body.desktop-mode #pgStats,
+body.desktop-mode #pgSet{
+  display:none;
+}
+body.desktop-mode .desk-active{
+  display:flex !important;
+}
 body.desktop-mode #pgChart{
   overflow:hidden;
 }
 body.desktop-mode #pgChart #kchart{
-  flex:0 0 var(--chart-h);
+  height:var(--chart-h);
+  flex:0 0 auto;
   min-height:280px;
 }
-body.desktop-mode #pgWatch,
-body.desktop-mode #pgStats,
-body.desktop-mode #pgSet{display:none !important;}
 .desk-ctrl-group{display:flex;align-items:center;gap:8px;color:var(--txt2);font-size:12px;}
 .desk-ctrl-group input[type="range"]{width:170px;accent-color:var(--acc);}
+.desk-menu{display:flex;align-items:center;gap:6px;margin-left:auto;}
+.desk-menu-btn{
+  border:1px solid var(--brd);
+  background:var(--bg3);
+  color:var(--txt2);
+  border-radius:8px;
+  padding:6px 10px;
+  font-size:12px;
+  font-weight:700;
+}
+.desk-menu-btn.active{
+  border-color:rgba(246,196,69,.5);
+  color:var(--acc);
+  background:rgba(246,196,69,.12);
+}
 #desktopControls{display:none;}
 
 </style>
@@ -1111,6 +1137,12 @@ body.desktop-mode #pgSet{display:none !important;}
   <div class="desk-ctrl-group">
     <span>K線高度</span>
     <input type="range" id="chartHeight" min="45" max="80" value="62">
+  </div>
+  <div class="desk-menu" id="desktopMenu">
+    <button class="desk-menu-btn active" data-page="pgChart">K線</button>
+    <button class="desk-menu-btn" data-page="pgWatch">自選</button>
+    <button class="desk-menu-btn" data-page="pgStats">統計</button>
+    <button class="desk-menu-btn" data-page="pgSet">設定</button>
   </div>
 </div>
 
@@ -1679,6 +1711,7 @@ let zoomState={start:0,end:100};
 let kRangeMode='next1';
 let currentList=[], currentRowIndex=-1;
 let activePage='pgRank';
+let desktopRightPage='pgChart';
 const DESKTOP_MODE=true;
 
 // Chart state (no crosshair lock)
@@ -1770,9 +1803,13 @@ const hideOverlay=()=>byId('overlay').classList.remove('show');
 // ════════════════════════════════════════════════
 function switchPage(id){
   if(DESKTOP_MODE){
-    activePage=id;
+    if(id==='pgRank'){ activePage='pgRank'; return; }
+    const rightPages=['pgChart','pgWatch','pgStats','pgSet'];
+    if(rightPages.includes(id)){
+      setDesktopRightPage(id);
+      activePage=id;
+    }
     if(id==='pgChart'){
-      byId('pgChart')?.scrollIntoView({behavior:'smooth',block:'start'});
       setTimeout(()=>{if(chart)chart.resize();},80);
     }
     if(id==='pgStats')renderStats();
@@ -4233,6 +4270,15 @@ document.querySelectorAll('.nb').forEach((nb,i)=>{
 });
 
 // Init
+function setDesktopRightPage(id){
+  const rightPages=['pgChart','pgWatch','pgStats','pgSet'];
+  rightPages.forEach(pid=>byId(pid)?.classList.toggle('desk-active',pid===id));
+  document.querySelectorAll('.desk-menu-btn').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.page===id);
+  });
+  desktopRightPage=id;
+}
+
 if(DESKTOP_MODE){
   document.body.classList.add('desktop-mode');
   const splitWidth=byId('splitWidth');
@@ -4240,6 +4286,7 @@ if(DESKTOP_MODE){
   if(splitWidth){
     splitWidth.addEventListener('input',e=>{
       document.documentElement.style.setProperty('--split-left',`${e.target.value}%`);
+      if(chart)chart.resize();
     });
   }
   if(chartHeight){
@@ -4248,6 +4295,13 @@ if(DESKTOP_MODE){
       if(chart)chart.resize();
     });
   }
+  byId('desktopMenu')?.addEventListener('click',e=>{
+    const btn=e.target.closest('.desk-menu-btn');
+    if(!btn)return;
+    const pid=btn.dataset.page;
+    switchPage(pid);
+  });
+  setDesktopRightPage(desktopRightPage);
 }
 updateWatchButtons();
 
