@@ -1,0 +1,16 @@
+{
+  "name": "看盤 PRO",
+  "short_name": "看盤",
+  "description": "台股行情 — 排行榜 · K線 · 類股分析",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "lang": "zh-Hant",
+  "categories": ["finance"],
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
